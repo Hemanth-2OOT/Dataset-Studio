@@ -1,0 +1,18 @@
+# Local Database File
+*.db
+*.sqlite3
+backend/dataset_studio.db
+
+# Python environments and compilation caches
+__pycache__/
+*.pyc
+.env
+.venv
+venv/
+env/
+
+# Frontend dependencies and builds
+node_modules/
+frontend/dist/
+frontend/.env
+frontend/.env.local
