@@ -41,7 +41,7 @@ export default function Navbar() {
         alignItems: "center", 
         gap: "8px" 
       }}>
-        <span>💎</span> DatasetStudio
+        <span></span> DatasetStudio
       </div>
       <div style={{ 
         display: "flex", 

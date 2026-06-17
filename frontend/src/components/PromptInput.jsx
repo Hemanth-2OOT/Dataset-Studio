@@ -46,9 +46,9 @@ export default function PromptInput({ onGenerate }) {
         border: "1px solid #e2e8f0",
         boxSizing: "border-box"
       }}>\
-        <div style={{ fontSize: "28px", marginBottom: "8px" }}>🧠</div>
+        <div style={{ fontSize: "28px", marginBottom: "8px" }}></div>
         <h2 style={{ margin: "0 0 6px 0", fontSize: isMobile ? "20px" : "24px", fontWeight: "700", color: "#0f172a", letterSpacing: "-0.02em" }}>
-          Core Topology Request
+          Prompt your dataset
         </h2>
         <p style={{ margin: "0 0 24px 0", fontSize: isMobile ? "13px" : "14px", color: "#64748b", lineHeight: "1.5" }}>
           Describe your application context requirements below using plain natural language structures.

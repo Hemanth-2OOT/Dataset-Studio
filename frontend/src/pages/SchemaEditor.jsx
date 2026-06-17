@@ -84,7 +84,7 @@ export default function SchemaEditor() {
               width: isMobile ? "100%" : "auto"
             }}
           >
-            Synthesize Model Records ⚡
+            Synthesize Model Records 
           </button>
         </div>
       </div>
