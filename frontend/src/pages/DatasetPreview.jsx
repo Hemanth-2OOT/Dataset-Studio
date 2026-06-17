@@ -5,15 +5,12 @@ import API from "../services/api";
 
 export default function DatasetPreview() {
   const navigate = useNavigate();
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
   const [rows, setRows] = useState(() => {
     const saved = localStorage.getItem("dataset");
     if (!saved) return [];
-    try {
-      return JSON.parse(saved).preview || [];
-    } catch {
-      return [];
-    }
+    try { return JSON.parse(saved).preview || []; } catch { return []; }
   });
 
   const [datasetInfo, setDatasetInfo] = useState(() => {
@@ -22,40 +19,28 @@ export default function DatasetPreview() {
     try {
       const data = JSON.parse(saved);
       return { rowCount: data.row_count, colCount: data.col_count };
-    } catch {
-      return null;
-    }
+    } catch { return null; }
   });
 
   const [loading, setLoading] = useState(false);
-  
-  // Storing row size as a string allows leading zeros like '010' in the text buffer
-  const [settings, setSettings] = useState({
-    size: "500", 
-    style: "random",
-    missing_pct: 0,
-    noise: "low",
-  });
+  const [settings, setSettings] = useState({ size: "500", style: "random", missing_pct: 0, noise: "low" });
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   const generateDataset = async () => {
     try {
       setLoading(true);
       const schemaData = JSON.parse(localStorage.getItem("schema"));
-      if (!schemaData) {
-        alert("No active schema session context found.");
-        return;
-      }
-
-      // Convert size safely back to an integer right before executing the API request
+      if (!schemaData) { alert("No active schema session context found."); return; }
       const parsedSize = parseInt(settings.size, 10) || 10;
-
       const res = await API.post("/generate-dataset", {
         session_id: schemaData.session_id,
         schema: schemaData.schema,
-        settings: {
-          ...settings,
-          size: parsedSize
-        },
+        settings: { ...settings, size: parsedSize },
       });
       localStorage.setItem("dataset", JSON.stringify(res.data));
       setRows(res.data.preview || []);
@@ -68,143 +53,74 @@ export default function DatasetPreview() {
     }
   };
 
-  useEffect(() => {
-    if (rows.length === 0) {
-      generateDataset();
-    }
-  }, []);
+  useEffect(() => { if (rows.length === 0) generateDataset(); }, []);
 
   const exportFile = (format) => {
     const schemaData = JSON.parse(localStorage.getItem("schema") || "null");
     const sessionId = schemaData?.session_id || localStorage.getItem("sessionId");
-    if (!sessionId) {
-      alert("Session validation token reference lost.");
-      return;
-    }
+    if (!sessionId) { alert("Session validation token reference lost."); return; }
     const baseUrl = API.defaults.baseURL || "http://127.0.0.1:8000";
     window.open(`${baseUrl}/export/${sessionId}/${format}`, "_blank");
   };
 
   return (
-    <div style={{ maxWidth: "1400px", margin: "40px auto", padding: "0 30px" }}>
-      
-      {/* Header Section */}
+    <div style={{ width: "100%", maxWidth: "1400px", margin: isMobile ? "10px auto" : "40px auto", padding: isMobile ? "0 12px" : "0 30px", boxSizing: "border-box" }}>
       <div style={{ marginBottom: "28px" }}>
-        <h1 style={{ margin: 0, fontSize: "26px", fontWeight: "700", color: "#0f172a" }}>Dataset Engine Pipeline</h1>
-        <p style={{ margin: "4px 0 0 0", color: "#64748b", fontSize: "14px" }}>Configure parameters, synthesize simulated row records, and access downstream analytics options.</p>
+        <h1 style={{ margin: 0, fontSize: isMobile ? "22px" : "26px", fontWeight: "700", color: "#0f172a" }}>Dataset Engine Pipeline</h1>
+        <p style={{ margin: "4px 0 0 0", color: "#64748b", fontSize: "14px" }}>Configure parameters and synthesize simulated row records.</p>
       </div>
 
-      {/* Analytics Summary Counters */}
-      <div style={{ display: "flex", gap: "16px", marginBottom: "32px" }}>
-        <div style={{ flex: 1, padding: "20px 24px", borderRadius: "12px", border: "1px solid #e2e8f0", background: "#ffffff", boxShadow: "0 1px 3px rgba(0,0,0,0.02)" }}>
+      <div style={{ display: "flex", flexDirection: isMobile ? "column" : "row", gap: "16px", marginBottom: "32px" }}>
+        <div style={{ flex: 1, padding: "20px 24px", borderRadius: "12px", border: "1px solid #e2e8f0", background: "#ffffff" }}>
           <span style={{ fontSize: "11px", fontWeight: "700", color: "#64748b", letterSpacing: "0.05em" }}>TOTAL DATASET SIZE</span>
-          <h2 style={{ margin: "4px 0 0 0", fontSize: "28px", fontWeight: "700", color: "#0f172a" }}>
-            {datasetInfo?.rowCount?.toLocaleString() || 0} <span style={{ fontSize: "14px", fontWeight: "400", color: "#94a3b8" }}>rows</span>
-          </h2>
+          <h2 style={{ margin: "4px 0 0 0", fontSize: "24px", fontWeight: "800", color: "#0f172a" }}>{datasetInfo ? `${datasetInfo.rowCount.toLocaleString()} Rows` : "--"}</h2>
         </div>
-        <div style={{ flex: 1, padding: "20px 24px", borderRadius: "12px", border: "1px solid #e2e8f0", background: "#ffffff", boxShadow: "0 1px 3px rgba(0,0,0,0.02)" }}>
-          <span style={{ fontSize: "11px", fontWeight: "700", color: "#64748b", letterSpacing: "0.05em" }}>DATASET BREADTH</span>
-          <h2 style={{ margin: "4px 0 0 0", fontSize: "28px", fontWeight: "700", color: "#0f172a" }}>
-            {datasetInfo?.colCount || 0} <span style={{ fontSize: "14px", fontWeight: "400", color: "#94a3b8" }}>columns</span>
-          </h2>
+        <div style={{ flex: 1, padding: "20px 24px", borderRadius: "12px", border: "1px solid #e2e8f0", background: "#ffffff" }}>
+          <span style={{ fontSize: "11px", fontWeight: "700", color: "#64748b", letterSpacing: "0.05em" }}>ATTRIBUTES STRUCT</span>
+          <h2 style={{ margin: "4px 0 0 0", fontSize: "24px", fontWeight: "800", color: "#2563eb" }}>{datasetInfo ? `${datasetInfo.colCount} Fields` : "--"}</h2>
         </div>
       </div>
 
-      {/* Synthesis Configuration Controls */}
-      <div style={{ padding: "24px", borderRadius: "12px", border: "1px solid #e2e8f0", marginBottom: "32px", background: "#ffffff", boxShadow: "0 1px 3px rgba(0,0,0,0.02)" }}>
-        <h3 style={{ margin: "0 0 16px 0", fontSize: "15px", fontWeight: "600", color: "#1e293b" }}>Synthesis Parameters Engine</h3>
-        
-        <div style={{ display: "flex", gap: "20px", flexWrap: "wrap", alignItems: "flex-end" }}>
-          
-          <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-            <label style={{ fontSize: "11px", color: "#475569", fontWeight: "700", letterSpacing: "0.03em" }}>GENERATED ROWS COUNT</label>
-            <input
-              type="text"
-              value={settings.size}
-              onChange={(e) => {
-                // Strips out non-numeric entries but leaves digits and leading zeros completely intact
-                const cleanVal = e.target.value.replace(/[^0-9]/g, "");
-                setSettings({ ...settings, size: cleanVal });
-              }}
-              style={{ padding: "10px 14px", borderRadius: "8px", border: "1px solid #cbd5e1", fontSize: "13px", width: "130px", outline: "none", color: "#334155" }}
-            />
+      <div style={{ background: "#ffffff", border: "1px solid #e2e8f0", borderRadius: "14px", padding: isMobile ? "16px" : "24px", marginBottom: "32px" }}>
+        <h3 style={{ margin: "0 0 16px 0", fontSize: "15px", fontWeight: "600", color: "#334155" }}>Pipeline Synthesis Tuner</h3>
+        <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(4, 1fr)", gap: "16px" }}>
+          <div>
+            <label style={{ display: "block", fontSize: "12px", fontWeight: "600", color: "#475569", marginBottom: "6px" }}>Generation Volumetrics</label>
+            <input type="text" value={settings.size} onChange={(e) => setSettings({ ...settings, size: e.target.value })} style={{ width: "100%", padding: "10px", border: "1px solid #cbd5e1", borderRadius: "8px", boxSizing: "border-box" }} />
           </div>
-
-          <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-            <label style={{ fontSize: "11px", color: "#475569", fontWeight: "700", letterSpacing: "0.03em" }}>DISTRIBUTION STYLE</label>
-            <select 
-              value={settings.style} 
-              onChange={(e) => setSettings({ ...settings, style: e.target.value })}
-              style={{ padding: "10px 14px", borderRadius: "8px", border: "1px solid #cbd5e1", fontSize: "13px", background: "#fff", outline: "none", color: "#334155" }}
-            >
-              <option value="random">Random Distribution</option>
-              <option value="balanced">Balanced Blocks</option>
-              <option value="realistic">Realistic Profiles</option>
+          <div>
+            <label style={{ display: "block", fontSize: "12px", fontWeight: "600", color: "#475569", marginBottom: "6px" }}>Distribution Profile</label>
+            <select value={settings.style} onChange={(e) => setSettings({ ...settings, style: e.target.value })} style={{ width: "100%", padding: "10px", border: "1px solid #cbd5e1", borderRadius: "8px", background: "#ffffff" }}>
+              <option value="random">Standard Random</option>
+              <option value="realistic">Gaussian Production Fit</option>
+              <option value="skewed">Asymmetric Vector Skew</option>
             </select>
           </div>
-
-          <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-            <label style={{ fontSize: "11px", color: "#475569", fontWeight: "700", letterSpacing: "0.03em" }}>MISSINGNESS RATIO (%)</label>
-            <input
-              type="number"
-              min="0"
-              max="100"
-              value={settings.missing_pct}
-              onChange={(e) => setSettings({ ...settings, missing_pct: Number(e.target.value) })}
-              style={{ padding: "10px 14px", borderRadius: "8px", border: "1px solid #cbd5e1", fontSize: "13px", width: "130px", outline: "none", color: "#334155" }}
-            />
+          <div>
+            <label style={{ display: "block", fontSize: "12px", fontWeight: "600", color: "#475569", marginBottom: "6px" }}>Anomalous Data Drift (%)</label>
+            <input type="number" value={settings.missing_pct} onChange={(e) => setSettings({ ...settings, missing_pct: parseFloat(e.target.value) || 0 })} style={{ width: "100%", padding: "10px", border: "1px solid #cbd5e1", borderRadius: "8px", boxSizing: "border-box" }} />
           </div>
-
-          <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-            <label style={{ fontSize: "11px", color: "#475569", fontWeight: "700", letterSpacing: "0.03em" }}>OUTLIER NOISE VARIANCE</label>
-            <select 
-              value={settings.noise} 
-              onChange={(e) => setSettings({ ...settings, noise: e.target.value })}
-              style={{ padding: "10px 14px", borderRadius: "8px", border: "1px solid #cbd5e1", fontSize: "13px", background: "#fff", outline: "none", color: "#334155" }}
-            >
-              <option value="low">Low Noise</option>
-              <option value="medium">Medium Variance</option>
-              <option value="high">High Variance</option>
+          <div>
+            <label style={{ display: "block", fontSize: "12px", fontWeight: "600", color: "#475569", marginBottom: "6px" }}>Noise Amplitude</label>
+            <select value={settings.noise} onChange={(e) => setSettings({ ...settings, noise: e.target.value })} style={{ width: "100%", padding: "10px", border: "1px solid #cbd5e1", borderRadius: "8px", background: "#ffffff" }}>
+              <option value="none">Zero Noise Floor</option>
+              <option value="low">Low Divergence (5%)</option>
+              <option value="high">High Stress Variance (20%)</option>
             </select>
           </div>
-
-          <button 
-            onClick={generateDataset} 
-            disabled={loading}
-            style={{
-              padding: "11px 22px",
-              background: loading ? "#cbd5e1" : "#2563eb",
-              color: loading ? "#94a3b8" : "#ffffff",
-              border: "none",
-              borderRadius: "8px",
-              fontWeight: "600",
-              fontSize: "13px",
-              cursor: loading ? "not-allowed" : "pointer",
-              transition: "background 0.2s"
-            }}
-          >
-            {loading ? "Synthesizing Framework..." : "Regenerate Dataset ✨"}
-          </button>
         </div>
-      </div>
-
-      {/* Export Action Buttons */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px", flexWrap: "wrap", gap: "12px" }}>
-        <div style={{ display: "flex", gap: "12px" }}>
-          <button onClick={() => exportFile("csv")} style={{ padding: "11px 20px", background: "#0284c7", color: "#ffffff", border: "none", borderRadius: "8px", fontWeight: "600", fontSize: "13px", cursor: "pointer", boxShadow: "0 4px 6px -1px rgba(2, 132, 199, 0.15)" }}>📥 Download CSV (.csv)</button>
-          <button onClick={() => exportFile("xlsx")} style={{ padding: "11px 20px", background: "#16a34a", color: "#ffffff", border: "none", borderRadius: "8px", fontWeight: "600", fontSize: "13px", cursor: "pointer", boxShadow: "0 4px 6px -1px rgba(22, 163, 74, 0.15)" }}>📊 Download Excel (.xlsx)</button>
-          <button onClick={() => exportFile("json")} style={{ padding: "11px 20px", background: "#4b5563", color: "#ffffff", border: "none", borderRadius: "8px", fontWeight: "600", fontSize: "13px", cursor: "pointer", boxShadow: "0 4px 6px -1px rgba(75, 85, 99, 0.15)" }}>{`{ }`} Download JSON (.json)</button>
-        </div>
-
-        <button onClick={() => navigate("/visualize")} style={{ padding: "11px 22px", background: "#0f172a", color: "#ffffff", border: "none", borderRadius: "8px", fontWeight: "600", fontSize: "13px", cursor: "pointer" }}>
-          View Analytics Dashboard →
+        <button onClick={generateDataset} disabled={loading} style={{ marginTop: "20px", width: "100%", padding: "12px", background: "#2563eb", color: "#ffffff", border: "none", borderRadius: "8px", fontWeight: "600", cursor: "pointer" }}>
+          {loading ? "Re-Synthesizing Matrix..." : "Sync Engine Settings & Regulate ⚡"}
         </button>
       </div>
 
-      {/* Interactive Grid */}
-      <div style={{ marginTop: "16px" }}>
-        <DatasetTable rows={rows} />
+      <div style={{ marginBottom: "20px", display: "flex", flexDirection: isMobile ? "column" : "row", gap: "12px" }}>
+        <button onClick={() => exportFile("csv")} style={{ flex: 1, padding: "11px 20px", background: "#0284c7", color: "#ffffff", border: "none", borderRadius: "8px", fontWeight: "600", cursor: "pointer" }}>📥 Download CSV</button>
+        <button onClick={() => exportFile("xlsx")} style={{ flex: 1, padding: "11px 20px", background: "#16a34a", color: "#ffffff", border: "none", borderRadius: "8px", fontWeight: "600", cursor: "pointer" }}>📊 Download Excel</button>
+        <button onClick={() => exportFile("json")} style={{ flex: 1, padding: "11px 20px", background: "#4b5563", color: "#ffffff", border: "none", borderRadius: "8px", fontWeight: "600", cursor: "pointer" }}>{`{ }`} Download JSON</button>
       </div>
+
+      <DatasetTable rows={rows} />
     </div>
   );
 }

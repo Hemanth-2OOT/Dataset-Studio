@@ -1,8 +1,15 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 export default function PromptInput({ onGenerate }) {
   const [prompt, setPrompt] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 640);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 640);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -19,22 +26,32 @@ export default function PromptInput({ onGenerate }) {
   };
 
   return (
-    <div style={{ minHeight: "80vh", display: "flex", alignItems: "center", justifyContent: "center", background: "#f8fafc", padding: "20px" }}>
+    <div style={{ 
+      minHeight: "70vh", 
+      display: "flex", 
+      alignItems: "center", 
+      justifyContent: "center", 
+      background: "#f8fafc", 
+      padding: isMobile ? "12px" : "20px",
+      boxSizing: "border-box",
+      width: "100%"
+    }}>
       <form onSubmit={handleSubmit} style={{
         width: "100%",
         maxWidth: "560px",
         background: "#ffffff",
-        padding: "40px",
+        padding: isMobile ? "20px 16px" : "40px",
         borderRadius: "16px",
         boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.05)",
-        border: "1px solid #e2e8f0"
-      }}>
+        border: "1px solid #e2e8f0",
+        boxSizing: "border-box"
+      }}>\
         <div style={{ fontSize: "28px", marginBottom: "8px" }}>🧠</div>
-        <h2 style={{ margin: "0 0 8px 0", fontSize: "22px", fontWeight: "700", color: "#0f172a" }}>
-          What dataset are we building today?
+        <h2 style={{ margin: "0 0 6px 0", fontSize: isMobile ? "20px" : "24px", fontWeight: "700", color: "#0f172a", letterSpacing: "-0.02em" }}>
+          Core Topology Request
         </h2>
-        <p style={{ margin: "0 0 24px 0", fontSize: "14px", color: "#64748b", lineHeight: "1.5" }}>
-          Describe your required columns, context, or anomalies in natural prose. Our generative module will structure the target entity properties.
+        <p style={{ margin: "0 0 24px 0", fontSize: isMobile ? "13px" : "14px", color: "#64748b", lineHeight: "1.5" }}>
+          Describe your application context requirements below using plain natural language structures.
         </p>
 
         <textarea
@@ -73,10 +90,10 @@ export default function PromptInput({ onGenerate }) {
             fontWeight: "600",
             fontSize: "15px",
             cursor: !prompt.trim() || isSubmitting ? "not-allowed" : "pointer",
-            transition: "all 0.2s"
+            transition: "background-color 0.2s"
           }}
         >
-          {isSubmitting ? "Parsing Data Topology..." : "Generate Schema Layout ✨"}
+          {isSubmitting ? "Processing Matrix Blueprint..." : "Compile Data Architecture"}
         </button>
       </form>
     </div>

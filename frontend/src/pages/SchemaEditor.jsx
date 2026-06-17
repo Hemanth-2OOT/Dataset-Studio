@@ -1,9 +1,16 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import SchemaTable from "../components/SchemaTable";
 
 export default function SchemaEditor() {
   const navigate = useNavigate();
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   const data = JSON.parse(localStorage.getItem("schema"));
 
@@ -19,65 +26,49 @@ export default function SchemaEditor() {
   const [schema, setSchema] = useState(data.schema);
 
   const generateDataset = () => {
-    const updatedData = {
-      ...data,
-      schema,
-    };
-
+    const updatedData = { ...data, schema };
     localStorage.setItem("schema", JSON.stringify(updatedData));
     localStorage.setItem("sessionId", data.session_id);
-
     navigate("/preview");
   };
 
   return (
-    <div style={{ maxWidth: "1200px", margin: "40px auto", padding: "0 24px", fontFamily: "system-ui, sans-serif" }}>
-      
-      {/* Dynamic Header Section */}
-      <div style={{
+    <div style={{ 
+      width: "100%",
+      maxWidth: "1200px", 
+      margin: isMobile ? "10px auto" : "40px auto", 
+      padding: isMobile ? "0 12px" : "0 24px", 
+      fontFamily: "system-ui, sans-serif",
+      boxSizing: "border-box"
+    }}>
+      <div style={{ 
         background: "#ffffff",
-        padding: "24px",
-        borderRadius: "12px",
         border: "1px solid #e2e8f0",
-        marginBottom: "24px",
-        boxShadow: "0 1px 3px 0 rgba(0, 0, 0, 0.02)"
+        borderRadius: "16px",
+        padding: isMobile ? "16px" : "32px",
+        boxShadow: "0 4px 6px -1px rgba(0,0,0,0.02)",
+        boxSizing: "border-box",
+        width: "100%"
       }}>
-        <span style={{ fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.05em", color: "#2563eb", fontWeight: "700" }}>
-          Database Target Schema Configurator
-        </span>
-        <h2 style={{ margin: "4px 0 0 0", fontSize: "24px", fontWeight: "700", color: "#0f172a" }}>
-          {schema.dataset_name || "Dataset Structure Generation"}
-        </h2>
-      </div>
-
-      {/* Interactive Schema Workbench Container */}
-      <div style={{
-        background: "#ffffff",
-        padding: "32px",
-        borderRadius: "12px",
-        border: "1px solid #e2e8f0",
-        boxShadow: "0 4px 6px -1px rgba(0,0,0,0.02)"
-      }}>
-        <h3 style={{ margin: "0 0 8px 0", fontSize: "16px", fontWeight: "600", color: "#1e293b" }}>
+        <h3 style={{ margin: "0 0 8px 0", fontSize: isMobile ? "18px" : "20px", fontWeight: "600", color: "#1e293b" }}>
           Columns Topology Definition
         </h3>
         <p style={{ margin: "0 0 24px 0", fontSize: "14px", color: "#64748b", lineHeight: "1.5" }}>
           Review the structural entities below. You can freely rename variables, adjust primitive data type parameters, or provide custom semantic rules to guide the generation engine.
         </p>
 
-        {/* Embedded Interactive Table Layer */}
         <SchemaTable
           schema={schema}
-          onChange={(columns) =>
-            setSchema({
-              ...schema,
-              columns,
-            })
-          }
+          onChange={(columns) => setSchema({ ...schema, columns })}
         />
 
-        {/* Form Action Controls */}
-        <div style={{ display: "flex", justifyContent: "flex-end", borderTop: "1px solid #f1f5f9", marginTop: "32px", paddingTop: "24px" }}>
+        <div style={{ 
+          display: "flex", 
+          justifyContent: isMobile ? "center" : "flex-end", 
+          borderTop: "1px solid #f1f5f9", 
+          marginTop: "32px", 
+          paddingTop: "24px" 
+        }}>
           <button
             onClick={generateDataset}
             style={{
@@ -89,11 +80,11 @@ export default function SchemaEditor() {
               fontWeight: "600",
               fontSize: "14px",
               cursor: "pointer",
-              boxShadow: "0 1px 2px 0 rgba(0, 0, 0, 0.05)",
-              transition: "background 0.2s"
+              boxShadow: "0 1px 2px 0 rgba(0,0,0,0.05)",
+              width: isMobile ? "100%" : "auto"
             }}
           >
-            Compile Dataset Model →
+            Synthesize Model Records ⚡
           </button>
         </div>
       </div>
