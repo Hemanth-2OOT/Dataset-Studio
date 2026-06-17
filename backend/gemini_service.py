@@ -9,8 +9,8 @@ load_dotenv()
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 
 GEMINI_URL = (
-    "https://generativelanguage.googleapis.com/v1beta/models/"
-    "gemini-1.5-flash:generateContent"
+    "https://generativelanguage.googleapis.com/v1/models/"
+    "gemini-2.5-flash:generateContent"
 )
 
 SYSTEM_PROMPT = """
@@ -130,6 +130,7 @@ async def generate_schema_from_gemini(prompt: str) -> dict:
             "maxOutputTokens": 2048,
             "topP": 0.8,
             "topK": 20,
+            "responseMimeType": "application/json"
         }
     }
 
